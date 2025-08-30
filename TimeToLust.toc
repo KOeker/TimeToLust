@@ -1,0 +1,12 @@
+## Interface: 110200
+## Title: TimeToLust
+## IconTexture: Interface/Addons/TimeToLust/resources/icon_round.png
+## Notes: Enhance your lust experience with customizable features.
+## Author: KTDS
+## Version: 1.2.1
+## SavedVariables: TimeToLustConfig
+Bindings.xml
+src/Utils.lua
+src/Globals.lua
+src/Configuration.lua
+src/Core.lua

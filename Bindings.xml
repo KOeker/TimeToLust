@@ -1,0 +1,5 @@
+<Bindings>
+  <Binding name="TIMETOLUST_KEYBIND" category="TimeToLust">
+    TIMETOLUST_KEYBIND()
+  </Binding>
+</Bindings>
