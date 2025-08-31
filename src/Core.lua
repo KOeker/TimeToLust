@@ -1,6 +1,5 @@
 local StopSound, C_Sound, PlaySoundFile, CreateFrame = StopSound, C_Sound, PlaySoundFile, CreateFrame
 
--- Global sound management state
 local soundState = {
 	isBloodlustSoundActive = false,
 	isTankCommandSoundActive = false,
@@ -8,10 +7,8 @@ local soundState = {
 	isInValidInstance = false
 }
 
--- Check if player is in a valid instance for sound playing
 local function IsInValidInstance()
 	local currentTime = GetTime()
-	-- Cache the result for 5 seconds to avoid excessive API calls
 	if currentTime - soundState.lastInstanceCheck < 5 then
 		return soundState.isInValidInstance
 	end
@@ -22,23 +19,19 @@ local function IsInValidInstance()
 	return soundState.isInValidInstance
 end
 
--- Enhanced cleanup function for all sound resources
 local function CleanupAllSounds()
 	DebugPrint("Performing complete sound cleanup")
 	
-	-- Stop tank command sound
 	if TimeToLust.soundHandle then
 		StopSound(TimeToLust.soundHandle)
 		TimeToLust.soundHandle = nil
 	end
 	
-	-- Stop bloodlust sound
 	if TimeToLust.bloodlustSoundHandle then
 		StopSound(TimeToLust.bloodlustSoundHandle)
 		TimeToLust.bloodlustSoundHandle = nil
 	end
 	
-	-- Cancel all timers
 	if TimeToLust.soundCheckTimer then
 		TimeToLust.soundCheckTimer:Cancel()
 		TimeToLust.soundCheckTimer = nil
@@ -59,13 +52,11 @@ local function CleanupAllSounds()
 		TimeToLust.bloodlustSoundStopTimer = nil
 	end
 	
-	-- Reset state
 	soundState.isBloodlustSoundActive = false
 	soundState.isTankCommandSoundActive = false
 	TimeToLust.isRequireActive = false
 	TimeToLust.currentBloodlustSpellId = nil
 	
-	-- Clear all sound tracking variables
 	TimeToLust.soundStartTime = nil
 	TimeToLust.soundPath = nil
 	TimeToLust.soundChannel = nil
@@ -77,7 +68,6 @@ end
 local function StartSoundMonitoring(soundPath, channelIdentifier, duration)
 	if not soundPath then return end
 	
-	-- Check if we're in a valid instance
 	if not IsInValidInstance() then
 		DebugPrint("Not in valid instance - skipping sound monitoring")
 		return
@@ -92,7 +82,6 @@ local function StartSoundMonitoring(soundPath, channelIdentifier, duration)
 		TimeToLust.soundCheckTimer:Cancel()
 	end
 	
-	-- Add hard stop timer to prevent infinite sounds
 	if TimeToLust.soundStopTimer then
 		TimeToLust.soundStopTimer:Cancel()
 	end
@@ -102,14 +91,12 @@ local function StartSoundMonitoring(soundPath, channelIdentifier, duration)
 	end)
 	
 	TimeToLust.soundCheckTimer = C_Timer.NewTicker(0.5, function()
-		-- Check if we're still in a valid instance
 		if not IsInValidInstance() then
 			DebugPrint("Left instance - stopping tank command sound")
 			StopTestSound()
 			return
 		end
 		
-		-- Check if bloodlust sound is active - if so, mute tank command
 		if soundState.isBloodlustSoundActive then
 			DebugPrint("Bloodlust sound active - muting tank command sound")
 			if TimeToLust.soundHandle then
@@ -127,7 +114,7 @@ local function StartSoundMonitoring(soundPath, channelIdentifier, duration)
 				if remainingTime > 0.5 and not soundState.isBloodlustSoundActive then
 					DebugPrint("Tank sound stopped at " .. string.format("%.1f", elapsed) .. "s - Restarting for remaining " .. string.format("%.1f", remainingTime) .. "s")
 					
-					local restartSuccess, newHandle = PlaySoundFile(TimeToLust.soundPath, TimeToLust.soundChannel)
+					local restartSuccess, newHandle = PlaySoundFileWithVolume(TimeToLust.soundPath, TimeToLust.soundChannel, TimeToLustConfig.tankCommandVolume, remainingTime, "tankcommand_restart")
 					if restartSuccess then
 						TimeToLust.soundHandle = newHandle
 						DebugPrint("Tank sound restarted successfully")
@@ -153,7 +140,6 @@ end
 local function StartBloodlustSoundMonitoring(soundPath, channelIdentifier, duration)
 	if not soundPath then return end
 	
-	-- Check if we're in a valid instance
 	if not IsInValidInstance() then
 		DebugPrint("Not in valid instance - skipping bloodlust sound monitoring")
 		return
@@ -168,7 +154,6 @@ local function StartBloodlustSoundMonitoring(soundPath, channelIdentifier, durat
 		TimeToLust.bloodlustSoundCheckTimer:Cancel()
 	end
 	
-	-- Add hard stop timer for bloodlust sound
 	if TimeToLust.bloodlustSoundStopTimer then
 		TimeToLust.bloodlustSoundStopTimer:Cancel()
 	end
@@ -178,7 +163,6 @@ local function StartBloodlustSoundMonitoring(soundPath, channelIdentifier, durat
 	end)
 	
 	TimeToLust.bloodlustSoundCheckTimer = C_Timer.NewTicker(0.5, function()
-		-- Check if we're still in a valid instance
 		if not IsInValidInstance() then
 			DebugPrint("Left instance - stopping bloodlust sound")
 			StopBloodlustSound()
@@ -193,7 +177,7 @@ local function StartBloodlustSoundMonitoring(soundPath, channelIdentifier, durat
 				if remainingTime > 0.5 then
 					DebugPrint("Bloodlust sound stopped at " .. string.format("%.1f", elapsed) .. "s - Restarting for remaining " .. string.format("%.1f", remainingTime) .. "s")
 					
-					local restartSuccess, newHandle = PlaySoundFile(TimeToLust.bloodlustSoundPath, TimeToLust.bloodlustSoundChannel)
+					local restartSuccess, newHandle = PlaySoundFileWithVolume(TimeToLust.bloodlustSoundPath, TimeToLust.bloodlustSoundChannel, TimeToLustConfig.bloodlustSoundVolume, remainingTime, "bloodlust_restart")
 					if restartSuccess then
 						TimeToLust.bloodlustSoundHandle = newHandle
 						DebugPrint("Bloodlust sound restarted successfully")
@@ -238,6 +222,8 @@ function StopTestSound()
 	TimeToLust.soundStartTime = nil
 	TimeToLust.soundPath = nil
 	TimeToLust.soundChannel = nil
+	
+	CleanupVolumeSystem()
 end
 
 function StopBloodlustSound()
@@ -264,6 +250,8 @@ function StopBloodlustSound()
 	TimeToLust.bloodlustSoundStartTime = nil
 	TimeToLust.bloodlustSoundPath = nil
 	TimeToLust.bloodlustSoundChannel = nil
+	
+	CleanupVolumeSystem()
 end
 
 function PlayBloodlustSound()
@@ -271,29 +259,26 @@ function PlayBloodlustSound()
 		return
 	end
 	
-	-- Check if we're in a valid instance
 	if not IsInValidInstance() then
 		DebugPrint("Not in valid instance - skipping bloodlust sound")
 		return
 	end
 	
-	-- Stop any currently playing tank command sound to avoid conflicts
 	if soundState.isTankCommandSoundActive then
 		DebugPrint("Stopping tank command sound to play bloodlust sound")
 		StopTestSound()
 	end
 
-	if not TimeToLustConfig.selectedBloodlustDetectionSound then
-		print("TimeToLust: No Bloodlust Sound selected")
-		return
-	end
-
+	local selectedSound = TimeToLustConfig.selectedBloodlustDetectionSound
+	local soundPath = GetSoundPath(selectedSound)
 	local success
 	local channelIdentifier = TimeToLust.soundChannels[TimeToLustConfig.soundChannel].identifier
-	local soundPath = GetSoundPath(TimeToLustConfig.selectedBloodlustDetectionSound)
 	
-	if soundPath then
-		success, TimeToLust.bloodlustSoundHandle = PlaySoundFile(soundPath, channelIdentifier)
+	if soundPath and SoundFileExists(soundPath) then
+		success, TimeToLust.bloodlustSoundHandle = PlaySoundFileWithVolume(soundPath, channelIdentifier, TimeToLustConfig.bloodlustSoundVolume, 300, "bloodlust")
+	else
+		soundPath = "Interface\\AddOns\\TimeToLust\\sound\\timeToLustMale.mp3"
+		success, TimeToLust.bloodlustSoundHandle = PlaySoundFileWithVolume(soundPath, channelIdentifier, TimeToLustConfig.bloodlustSoundVolume, 300, "bloodlust")
 	end
 	
 	if not success then
@@ -305,7 +290,7 @@ function PlayBloodlustSound()
 		StartBloodlustSoundMonitoring(soundPath, channelIdentifier, 300)
 	end
 	
-	DebugPrint("Bloodlust-Sound started (" .. (TimeToLustConfig.selectedBloodlustDetectionSound or "fallback") .. ") - Handle: " .. tostring(TimeToLust.bloodlustSoundHandle))
+	DebugPrint("Bloodlust-Sound started (" .. (selectedSound or "fallback") .. ") - Handle: " .. tostring(TimeToLust.bloodlustSoundHandle))
 end
 
 function PlayTankCommandSound()
@@ -313,13 +298,11 @@ function PlayTankCommandSound()
 		return
 	end
 	
-	-- Check if we're in a valid instance
 	if not IsInValidInstance() then
 		DebugPrint("Not in valid instance - skipping tank command sound")
 		return
 	end
 	
-	-- Don't play tank command sound if bloodlust sound is active
 	if soundState.isBloodlustSoundActive then
 		DebugPrint("Bloodlust sound is active - muting tank command sound")
 		return
@@ -331,10 +314,10 @@ function PlayTankCommandSound()
 	local channelIdentifier = TimeToLust.soundChannels[TimeToLustConfig.soundChannel].identifier
 	
 	if soundPath and SoundFileExists(soundPath) then
-		success, TimeToLust.soundHandle = PlaySoundFile(soundPath, channelIdentifier)
+		success, TimeToLust.soundHandle = PlaySoundFileWithVolume(soundPath, channelIdentifier, TimeToLustConfig.tankCommandVolume, 6, "tankcommand")
 	else
 		soundPath = "Interface\\AddOns\\TimeToLust\\sound\\timeToLustMale.mp3"
-		success, TimeToLust.soundHandle = PlaySoundFile(soundPath, channelIdentifier)
+		success, TimeToLust.soundHandle = PlaySoundFileWithVolume(soundPath, channelIdentifier, TimeToLustConfig.tankCommandVolume, 6, "tankcommand")
 	end
 	
 	if not success then
@@ -356,10 +339,10 @@ function PlayTestSound()
 	local channelIdentifier = TimeToLust.soundChannels[TimeToLustConfig.soundChannel].identifier
 	
 	if soundPath and SoundFileExists(soundPath) then
-		success, TimeToLust.soundHandle = PlaySoundFile(soundPath, channelIdentifier)
+		success, TimeToLust.soundHandle = PlaySoundFileWithVolume(soundPath, channelIdentifier, TimeToLustConfig.tankCommandVolume, 30, "tanktest")
 	else
 		soundPath = "Interface\\AddOns\\TimeToLust\\sound\\timeToLustMale.mp3"
-		success, TimeToLust.soundHandle = PlaySoundFile(soundPath, channelIdentifier)
+		success, TimeToLust.soundHandle = PlaySoundFileWithVolume(soundPath, channelIdentifier, TimeToLustConfig.tankCommandVolume, 30, "tanktest")
 	end
 	
 	if not success then
@@ -368,10 +351,57 @@ function PlayTestSound()
 	end
 	
 	if success and soundPath then
-		StartSoundMonitoring(soundPath, channelIdentifier, 30)
+		soundState.isTankCommandSoundActive = true
+		TimeToLust.soundStartTime = GetTime()
+		TimeToLust.soundPath = soundPath
+		TimeToLust.soundChannel = channelIdentifier
+		
+		if TimeToLust.soundStopTimer then
+			TimeToLust.soundStopTimer:Cancel()
+		end
+		TimeToLust.soundStopTimer = C_Timer.After(30, function()
+			DebugPrint("Test tank sound timer finished")
+			StopTestSound()
+		end)
 	end
 	
 	DebugPrint("Tank Command Test Sound (" .. (selectedSound or "fallback") .. ") started - Handle: " .. tostring(TimeToLust.soundHandle) .. ", Success: " .. tostring(success))
+end
+
+function PlayBloodlustTestSound()
+	local selectedSound = TimeToLustConfig.selectedBloodlustDetectionSound
+	local soundPath = GetSoundPath(selectedSound)
+	local success
+	local channelIdentifier = TimeToLust.soundChannels[TimeToLustConfig.soundChannel].identifier
+	
+	if soundPath and SoundFileExists(soundPath) then
+		success, TimeToLust.bloodlustSoundHandle = PlaySoundFileWithVolume(soundPath, channelIdentifier, TimeToLustConfig.bloodlustSoundVolume, 30, "bloodlusttest")
+	else
+		soundPath = "Interface\\AddOns\\TimeToLust\\sound\\timeToLustMale.mp3"
+		success, TimeToLust.bloodlustSoundHandle = PlaySoundFileWithVolume(soundPath, channelIdentifier, TimeToLustConfig.bloodlustSoundVolume, 30, "bloodlusttest")
+	end
+	
+	if not success then
+		success, TimeToLust.bloodlustSoundHandle = PlaySoundFile(567450, channelIdentifier)
+		soundPath = nil
+	end
+	
+	if success and soundPath then
+		soundState.isBloodlustSoundActive = true
+		TimeToLust.bloodlustSoundStartTime = GetTime()
+		TimeToLust.bloodlustSoundPath = soundPath
+		TimeToLust.bloodlustSoundChannel = channelIdentifier
+		
+		if TimeToLust.bloodlustSoundStopTimer then
+			TimeToLust.bloodlustSoundStopTimer:Cancel()
+		end
+		TimeToLust.bloodlustSoundStopTimer = C_Timer.After(30, function()
+			DebugPrint("Test bloodlust sound timer finished")
+			StopBloodlustSound()
+		end)
+	end
+	
+	DebugPrint("Bloodlust Test Sound (" .. (selectedSound or "fallback") .. ") started - Handle: " .. tostring(TimeToLust.bloodlustSoundHandle) .. ", Success: " .. tostring(success))
 end
 
 function ShowScreenText(customText)
@@ -635,7 +665,8 @@ local function setupKeybinds()
 			Settings.OpenToCategory("TimeToLust")
 		elseif msg == "stop" or msg == "stopsounds" then
 			CleanupAllSounds()
-			print("TimeToLust: All sounds stopped and cleaned up")
+			CleanupVolumeSystem()
+			print("TimeToLust: All sounds stopped and volume system cleaned up")
 		elseif msg == "errors" then
 			if TimeToLustConfig and TimeToLustConfig.suppressXMLErrors == nil then
 				TimeToLustConfig.suppressXMLErrors = true
@@ -648,11 +679,15 @@ local function setupKeybinds()
 			else
 				print("TimeToLust: XML-Error-Suppression deactivated (Needs restart)")
 			end
+		elseif msg == "fixvolume" then
+			CleanupVolumeSystem()
+			print("TimeToLust: Volume system reset and restored")
 		else
 			print("TimeToLust Commands:")
 			print("/timetolust trigger - Trigger Keybind-Action")
 			print("/timetolust config - Open Config")
-			print("/timetolust stop - Stop all sounds immediately")
+			print("/timetolust stop - Stop all sounds and fix volume")
+			print("/timetolust fixvolume - Reset volume system")
 			print("/timetolust errors - Toggle XML Error Suppression")
 		end
 	end
@@ -684,7 +719,6 @@ bloodlustFrame:SetScript("OnEvent", function(_, _)
 	end
 end)
 
--- Add cleanup event handlers
 local cleanupFrame = CreateFrame("Frame")
 cleanupFrame:RegisterEvent("PLAYER_LEAVING_WORLD")
 cleanupFrame:RegisterEvent("PLAYER_ENTERING_WORLD") 
@@ -696,13 +730,12 @@ cleanupFrame:SetScript("OnEvent", function(self, event, ...)
 		CleanupAllSounds()
 	elseif event == "PLAYER_ENTERING_WORLD" then
 		DebugPrint("Player entering world - resetting sound state")
-		soundState.lastInstanceCheck = 0 -- Force instance check refresh
+		soundState.lastInstanceCheck = 0
 	elseif event == "GROUP_LEFT" then
 		DebugPrint("Left group - cleaning up all sounds")
 		CleanupAllSounds()
 	elseif event == "ZONE_CHANGED_NEW_AREA" then
-		-- Check if we left an instance
-		C_Timer.After(1, function() -- Small delay to let the zone change complete
+		C_Timer.After(1, function()
 			if not IsInValidInstance() and (soundState.isBloodlustSoundActive or soundState.isTankCommandSoundActive) then
 				DebugPrint("Left instance area - cleaning up sounds")
 				CleanupAllSounds()

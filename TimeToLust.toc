@@ -3,7 +3,7 @@
 ## IconTexture: Interface/Addons/TimeToLust/resources/icon_round.png
 ## Notes: Enhance your lust experience with customizable features.
 ## Author: KTDS
-## Version: 1.2.1
+## Version: 1.3.0
 ## SavedVariables: TimeToLustConfig
 Bindings.xml
 src/Utils.lua

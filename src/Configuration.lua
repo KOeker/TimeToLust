@@ -4,10 +4,12 @@ local timeToLustDefaultConfig = {
 	disableTankBLRequire = false,
 	isBloodlustSoundMuted = false,
 	soundChannel = 1,
-	selectedBloodlustDetectionSound = nil,
+	selectedBloodlustDetectionSound = "timeToLustMale.mp3",
 	selectedTankCommandSound = "timeToLustMale.mp3",
 	customSounds = {},
 	debugMode = false,
+	tankCommandVolume = 1.0,
+	bloodlustSoundVolume = 1.0,
 	textSettings = {
 		text = "TIME TO LUST!",
 		font = "Fonts\\FRIZQT__.TTF",
@@ -165,7 +167,6 @@ function SettingsPanel:addSoundDropdownToLastRow(position, configKey, onSoundSel
 		local currentSelection = TimeToLustConfig[configKey]
 
 		local function setupMenu(dropdown, rootDescription)
-			-- Stop all sounds when dropdown is opened to prevent conflicts
 			StopTestSound()
 			StopBloodlustSound()
 			DebugPrint("Auto-stopped all sounds when sound dropdown opened")
@@ -329,6 +330,40 @@ local function createMainPanel()
 		end
 	end, TimeToLustConfig.isBloodlustSoundMuted)
 
+	settingsPanel:createOptionRowWithLabel("Tank Command Volume")
+	local lastTankVolume = TimeToLustConfig.tankCommandVolume
+	local tankSlider = settingsPanel:addSliderToLastRow(1, 0.1, 1.0, 0.1, TimeToLustConfig.tankCommandVolume, function(value)
+		local newVolume = math.floor(value * 100)
+		local oldVolume = math.floor(lastTankVolume * 100)
+		if newVolume ~= oldVolume then
+			TimeToLustConfig.tankCommandVolume = value
+			lastTankVolume = value
+			print("TimeToLust: Tank Command volume changed to: " .. newVolume .. "%")
+		else
+			TimeToLustConfig.tankCommandVolume = value
+		end
+	end)
+
+	settingsPanel:createOptionRowWithLabel("Bloodlust Sound Volume")
+	local lastBloodlustVolume = TimeToLustConfig.bloodlustSoundVolume
+	local bloodlustSlider = settingsPanel:addSliderToLastRow(1, 0.1, 1.0, 0.1, TimeToLustConfig.bloodlustSoundVolume, function(value)
+		local newVolume = math.floor(value * 100)
+		local oldVolume = math.floor(lastBloodlustVolume * 100)
+		if newVolume ~= oldVolume then
+			TimeToLustConfig.bloodlustSoundVolume = value
+			lastBloodlustVolume = value
+			print("TimeToLust: Bloodlust Sound volume changed to: " .. newVolume .. "%")
+		else
+			TimeToLustConfig.bloodlustSoundVolume = value
+		end
+	end)
+	
+	if not _G.TimeToLustSliders then
+		_G.TimeToLustSliders = {}
+	end
+	_G.TimeToLustSliders.tankSlider = tankSlider
+	_G.TimeToLustSliders.bloodlustSlider = bloodlustSlider
+
 	return mainPanel
 end
 
@@ -393,7 +428,7 @@ local function createSoundPanel()
 
 	settingsPanel:createOptionRowWithLabel("Test Bloodlust Sound")
 	settingsPanel:addButtonToLastRow(1, "Start", function()
-		PlayBloodlustSound()
+		PlayBloodlustTestSound()
 	end)
 	settingsPanel:addButtonToLastRow(2, "Stop", StopBloodlustSound)
 
@@ -469,6 +504,12 @@ local function loadConfig(_, _, addonName)
 	end
 
 	if type(TimeToLustConfig) == "table" then
+		if TimeToLustConfig.soundVolume and not TimeToLustConfig.tankCommandVolume then
+			TimeToLustConfig.tankCommandVolume = TimeToLustConfig.soundVolume
+			TimeToLustConfig.bloodlustSoundVolume = TimeToLustConfig.soundVolume
+			TimeToLustConfig.soundVolume = nil
+		end
+		
 		for defaultKey, defaultValue in pairs(timeToLustDefaultConfig) do
 			if TimeToLustConfig[defaultKey] == nil then
 				TimeToLustConfig[defaultKey] = defaultValue

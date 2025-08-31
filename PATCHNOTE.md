@@ -1,5 +1,72 @@
 # TimeToLust Changelog
 
+## [1.3.0] - 2025-08-31 - Advanced Volume Control & UI Enhancements
+
+### 🎚️ **Separate Volume Controls**
+
+#### 🎵 **Individual Sound Volume Management**
+- **Tank Command Volume**: Independent volume control for tank require sounds (10%-100%)
+- **Bloodlust Sound Volume**: Separate volume control for bloodlust detection sounds (10%-100%)
+- **Smart Volume System**: Intelligent handling of multiple simultaneous sounds
+  - When both sounds play simultaneously, the lower volume setting is used
+  - Automatic volume restoration when sounds end
+  - Precise duration-based volume management
+
+#### 🔒 **Dynamic Slider Locking**
+- **Active Sound Protection**: Sliders automatically lock when their respective sounds are playing
+- **Visual Feedback**: Locked sliders become semi-transparent (50% opacity) and non-interactive
+- **Automatic Unlocking**: Sliders unlock immediately when sounds end or are manually stopped
+- **Comprehensive Coverage**: Works for all sound triggers (keybinds, detection, test buttons)
+
+### 🛠️ **Robust Volume System**
+
+#### 🔧 **Advanced Volume Management**
+- **Session-Based Original Volume Storage**: Prevents volume corruption from rapid button clicks
+- **Multi-Sound Support**: Handles overlapping sounds with different volume levels intelligently
+- **Emergency Recovery**: Built-in cleanup system prevents stuck volume levels
+- **Timer Conflict Resolution**: Prevents volume restoration conflicts from multiple simultaneous sounds
+
+#### 🚨 **Volume Recovery Commands**
+- **`/timetolust stop`**: Stops all sounds and performs complete volume system cleanup
+- **`/timetolust fixvolume`**: Emergency volume system reset and restoration
+- **Automatic Cleanup**: Stop buttons now perform comprehensive volume system cleanup
+
+### 🎯 **Enhanced User Experience**
+
+#### 📢 **Smart Chat Notifications**
+- **Duplicate Message Prevention**: Volume change notifications only appear when values actually change
+- **Clean Chat Experience**: No more spam messages when sliding between same percentage values
+- **Precise Feedback**: Shows exact percentage changes (e.g., 90% → 80%)
+
+#### 🎮 **Improved Sound Testing**
+- **Separate Test Functions**: Independent test functions for tank and bloodlust sounds
+- **Instance Validation Bypass**: Test sounds work everywhere, not just in dungeons/raids
+- **Volume-Aware Testing**: Test sounds respect individual volume settings
+
+### 🔄 **System Improvements**
+
+#### 🏗️ **Architecture Enhancements**
+- **Sound Type Identification**: Each sound type is properly categorized and tracked
+- **Global Slider References**: Efficient slider state management across the addon
+- **Improved Debug System**: Enhanced debug output for volume system troubleshooting
+- **Configuration Migration**: Seamless upgrade from single volume to dual volume system
+
+#### 🛡️ **Stability & Reliability**
+- **Volume Corruption Prevention**: Robust protection against volume system corruption
+- **Timer Management**: Improved timer lifecycle management prevents memory leaks
+- **Error Recovery**: Comprehensive error handling and automatic recovery systems
+- **Session Persistence**: Volume settings and system state properly maintained across sessions
+
+### 🎨 **UI/UX Improvements**
+
+#### 🎛️ **Enhanced Settings Interface**
+- **Organized Volume Controls**: Clear separation of tank and bloodlust volume settings
+- **Real-Time Visual Feedback**: Immediate visual response to volume changes
+- **Intuitive Slider Behavior**: Smooth slider operation with proper value constraints
+- **Streamlined Debug Control**: Debug mode now controlled via code only (removed from UI)
+
+---
+
 ## [1.2.1] - 2025-08-30 - Improved Bloodlust Detection Organization
 
 ### 🔄 **Code Improvements**
